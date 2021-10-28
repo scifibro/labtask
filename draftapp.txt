@@ -1,0 +1,100 @@
+####### не успел закончить
+
+import numpy as np
+
+from dash import dcc, html
+from dash.dependencies import Input, Output
+import plotly.graph_objs as obj
+import plotly.express as px
+
+from app import app
+from data.dataframes import regions, get_data_by_region, view_processed_second, view_processed_day
+
+stock_data_addition = view_processed_second
+stock_data_all = view_processed_day
+
+layout = html.Div(
+    children=[
+        html.H1(children="Stock Exchange Data Charts ", style={'textAlign': 'center'}),
+        html.P('Select Region'),
+        dcc.Dropdown(id='regions-dropdown', options=[{"label": x.strip(), "value": x} for x in regions],
+                     value=regions[0]),
+        dcc.RadioItems(id='radiobutton-item',
+                       labelStyle={"display": "inline-block"},
+                       options=[
+                           {'label': 'Plot by month', 'value': 'month'},
+                           {'label': 'Plot by day', 'value': 'day'}
+                       ],
+                       value='month',
+                       style={'text-align': 'center', 'color': 'black'}),
+        dcc.Graph(id="temp-plot"),
+
+    ]
+)
+
+
+@app.callback(Output("temp-plot", "figure"),
+              [Input('regions-dropdown', 'value')],
+              [Input('radiobutton-item', 'value')])
+def add_graph_additional(region, radiobutton):
+    if radiobutton == 'day':
+        df = get_data_by_region(stock_data_all, region)
+        slider_max = df['year'].max()
+        slider_min = df['year'].min()
+        customdata = np.stack((df['currency'].str.strip(),
+                               df['exchange'].str.strip(),
+                               df['ind'].str.strip(),
+                               df['volume'].str.strip()), axis=-1)
+        hovertemplate = """Price: %{y}<br>Currency:%{customdata[0]}
+                            <br>Date: %{x}<br>Volume: %{customdata[3]}
+                            <br>Exchange:%{customdata[1]}<br>Index:%{customdata[2]}
+                        """
+        title = {
+            'text': f'Stock prices graph in {region.strip()} between {slider_min} and {slider_max} years',
+            'y': 0.93, 'x': 0.5,
+            'xanchor': 'center', 'yanchor': 'top'}
+        trace_open = obj.Scatter(x=df["date"], y=df["open"], mode="lines", name=f"Open price",
+                                 customdata=customdata,
+                                 hovertemplate=hovertemplate
+                                 )
+        trace_high = obj.Scatter(x=df["date"], y=df["high"], mode="lines", name=f"Highest price during day",
+                                 customdata=customdata,
+                                 hovertemplate=hovertemplate
+                                 )
+        trace_low = obj.Scatter(x=df["date"], y=df["low"], mode="lines", name=f"Lowest price during day",
+                                customdata=customdata,
+                                hovertemplate=hovertemplate
+                                )
+        trace_close = obj.Scatter(x=df["date"], y=df["close"], mode="lines", name=f"Close price",
+                                  customdata=customdata,
+                                  hovertemplate=hovertemplate
+                                  )
+
+        layout_obj = obj.Layout(xaxis=dict(range=[slider_min, slider_max], title='Year'), yaxis={'title': 'Stock Prices'},
+                            height=900, width=1450, hovermode='closest', title=title, font={'size': 15})
+        figure = obj.Figure(data=[trace_high, trace_low, trace_close, trace_open], layout=layout_obj)
+        return figure
+    else:
+        df = get_data_by_region(stock_data_addition, region)
+        slider_max = df['year'].max()
+        slider_min = df['year'].min()
+        customdata = np.stack((df['currency'].str.strip(),
+                               df['exchange'].str.strip(),
+                               df['ind'].str.strip(),
+                               df['max_high'].str.strip(),
+                               df['min_low'].str.strip()), axis=-1)
+        hovertemplate = """Volume: %{y}<br>Date: %{x<br>Currency:%{customdata[0]}
+                           <br>Exchange:%{customdata[1]}<br>Index:%{customdata[2]}
+                           }<br>Max price: %{customdata[3}<br>Min price: %{customdata[4}"""
+        title = {
+            'text': f'Overall volume graph by month in {region.strip()} between {slider_min} and {slider_max} years',
+            'y': 0.93, 'x': 0.5,
+            'xanchor': 'center', 'yanchor': 'top'}
+        figure = px.bar(df, x="date", y="sum_volume")
+
+        figure = figure.update_layot(xaxis=dict(range=[slider_min, slider_max], title='Year'), yaxis={'title': 'Overall Volume'},
+                            height=900, width=1450, hovermode='closest', title=title, legend={'title': 'Values'},
+                            font={'size': 15})
+        return figure
+    return figure
+
