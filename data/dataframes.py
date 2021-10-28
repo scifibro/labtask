@@ -1,7 +1,7 @@
 import pandas as pd
 from database.db import conn
 from pandas.io.sql import read_sql
-from database.commands import get_view_processed, get_view_processed_second, get_view_processed_with_day
+from database.commands import get_view_processed
 
 
 def get_df_from_query(query, db_connection):
@@ -24,9 +24,9 @@ regions = sorted(view_processed['region'].unique()) # all regions list
 #addition visualizations from me
 
 
-view_processed_second = get_df_from_query(get_view_processed_second, conn)
-view_processed_second['date'] = pd.to_datetime(view_processed_second['year'].astype(str) + '-' + view_processed_second['month'], format='%Y-%m').dt.strftime('%Y-%m')
-view_processed_day = get_df_from_query(get_view_processed_with_day, conn)
+#view_processed_second = get_df_from_query(get_view_processed_second, conn)
+#view_processed_second['date'] = pd.to_datetime(view_processed_second['year'].astype(str) + '-' + view_processed_second['month'], format='%Y-%m').dt.strftime('%Y-%m')
+#view_processed_day = get_df_from_query(get_view_processed_with_day, conn)
 
 
 

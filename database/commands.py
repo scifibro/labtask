@@ -6,7 +6,7 @@ create_tables = (
         Region CHAR(100) NOT NULL,
         Exchange  CHAR(100) NOT NULL,
         Index  CHAR(20) NOT NULL,
-        Currency  CHAR(15) NOT NULL
+        Currency  CHAR(15) NOT NULL;
     )
     """,
 
@@ -19,7 +19,7 @@ create_tables = (
             Low CHAR(50) ,
             Close CHAR(50) ,
             Adj_Close CHAR(50) ,
-            Volume CHAR(50) 
+            Volume CHAR(50) ;
             )
     """,
     """
@@ -33,7 +33,7 @@ create_tables = (
             Close  DOUBLE PRECISION NOT NULL,
             Adj_Close  DOUBLE PRECISION NOT NULL,
             Volume  DOUBLE PRECISION NOT NULL,
-            CloseUSD DOUBLE PRECISION
+            CloseUSD DOUBLE PRECISION;
 
     )
     """)
@@ -52,14 +52,17 @@ create_views = (
                     join info on index = t.ind
                     order by region asc;
         """,
-        """ CREATE OR REPLACE VIEW V_NOTPROCESSED AS
-            select distinct * from (select * from (SELECT d.* FROM data d
+        #### Korea region is not processed
+        """ CREATE OR REPLACE VIEW V_NOTPROCESSED AS 
+            select distinct key,date,open,high,low,
+            close,adj_close,volume,region,
+            exchange,currency  from (select * from (SELECT d.* FROM data d
             WHERE NOT EXISTS ( SELECT 1 FROM
             processed p WHERE d.index = p.index) )as a
             left JOIN  info i on a.index = i.index) as al;
         """,
-
-        """
+### остальные создовал для себя как дополнительно что то сделать
+        """ 
             create or replace view v_processed_second
             select * from
             (select min(low) as min_low ,sum(volume) as sum_volume,max(high) as max_high,
@@ -69,7 +72,7 @@ create_views = (
                           from processed
                           group by year,month,ind) as t
                           join info on index = t.ind
-                          order by region asc
+                          order by region asc;
         
               """,
 
@@ -78,22 +81,22 @@ create_views = (
                 close,adj_close,volume,region,
                 exchange,currency from  processed
                 join info on info.index=processed.index
-                order by region) as t
+                order by region) as t;
             """
      )
 
 
 get_view_processed = ("""
     select * from v_processed
-    order by region asc
+    order by region asc;
 """)
 
 get_view_processed_second = ("""
     select * from v_processed_second
-    order by year asc
+    order by region asc;
 """)
 
 get_view_processed_with_day = ("""
     select * from v_processed_with_day
-    order by region asc
+    order by region asc;
 """)

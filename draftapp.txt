@@ -1,4 +1,4 @@
-####### не успел закончить
+####### не успел закончить draft cod not working
 
 import numpy as np
 
